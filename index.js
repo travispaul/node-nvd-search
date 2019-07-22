@@ -136,6 +136,7 @@ module.exports = class NVD {
     const httpStream = request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`);
 
     httpStream.on('error', done);
+    gzip.on('error', done);
 
     gzip.on('close', () => {
       done(null, ctx);

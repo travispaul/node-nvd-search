@@ -11,7 +11,8 @@ describe('NVD Class', () => {
   before(done => {
 
     try {
-      fs.unlinkSync(path.join(__dirname, 'data', 'cache', 'nvdcve-1.0-modified.json'));
+      fs.unlinkSync(path.join(__dirname, 'data', 'cache',
+        'nvdcve-1.0-modified.json'));
     } catch (error) {
       if (error.code !== 'ENOENT') {
         throw error;
@@ -43,12 +44,6 @@ describe('NVD Class', () => {
         .get(`${syncURL.pathname}-recent.meta`)
         .reply(200, fs.readFileSync(path.join(__dirname, 'data',
           'nvdcve-1.0-recent.meta')).toString('utf8'));
-
-      // syncScope.get(`${syncURL.pathname}-recent.json.gz`)
-      //   .reply(200, (uri, requestBody) => {
-      //     return fs.createReadStream(path.join(__dirname, 'data',
-      //       'nvdcve-1.0-recent.json.gz'));
-      //   });
 
       syncScope.get(`${syncURL.pathname}-modified.meta`)
         .reply(200, fs.readFileSync(path.join(__dirname, 'data',
