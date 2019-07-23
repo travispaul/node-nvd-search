@@ -4,8 +4,11 @@ const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
 
+const JSONStream = require('JSONStream');
 const request = require('request');
 const {forEachParallel, waterfall} = require('vasync');
+
+let PROGRESSFN;
 
 module.exports = class NVD {
 
@@ -76,7 +79,7 @@ module.exports = class NVD {
   //
   // If $XDG_CACHE_HOME is either not set or empty, a default equal to
   // $HOME/.cache should be used.
-  static chooseDefaultCacheDir() {
+  static chooseDefaultCacheDir () {
     if (process.env.XDG_CACHE_HOME) {
       return path.join(process.env.XDG_CACHE_HOME, 'nvd')
     }
@@ -84,7 +87,7 @@ module.exports = class NVD {
   }
 
   // Download metafile and convert to an object
-  static fetchMetaFile(ctx, done) {
+  static fetchMetaFile (ctx, done) {
     const metaPath = `${ctx.config.rootPath}-${ctx.feed}.meta`;
     request(metaPath, (error, response, body) => {
       if (error) return done(error);
@@ -96,7 +99,7 @@ module.exports = class NVD {
   // Determine if local file matches the remoet metadata, if it doesn't set
   // ctx.fetchRemote to true so the next function in the pipeline downloads
   // the latest file.
-  static checkLocalFeedFile(ctx, done) {
+  static checkLocalFeedFile (ctx, done) {
     const localFeedFile = `${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`;
     const reader = fs.createReadStream(localFeedFile);
     const hash = crypto.createHash('sha256');
@@ -105,12 +108,8 @@ module.exports = class NVD {
     reader.on('end', () => {
       hash.end();
       const hashValue = hash.read().toUpperCase();
-      if (hashValue === ctx.metadata.sha256) {
-        done(null, ctx);
-      } else {
-        const error = `sha256 hash (${hashValue}) of ${localFeedFile} doesn't match metadata's hash: ${ctx.metadata.sha256}`;
-        done(new Error(error), ctx);
-      }
+      ctx.fetchRemote = (hashValue !== ctx.metadata.sha256);
+      done(null, ctx);
     });
 
     reader.on('error', (error) => {
@@ -138,9 +137,9 @@ module.exports = class NVD {
     httpStream.on('error', done);
     gzip.on('error', done);
 
-    gzip.on('close', () => {
+    writer.on('close', () => {
       done(null, ctx);
-    });
+    })
 
     httpStream.pipe(gzip).pipe(writer);
   }
@@ -155,6 +154,9 @@ module.exports = class NVD {
         NVD.checkLocalFeedFile,
         NVD.fetchRemoteFeedFile
     ], (error, ctx) => {
+        if (typeof ctx.progress === 'function') {
+          ctx.progress();
+        }
         if (error) {
           return done(error);
         }
@@ -190,16 +192,22 @@ module.exports = class NVD {
     });
   }
 
+  getConfig () {
+    return this.config;
+  }
+
   // sync remote files locally
-  sync(done) {
+  sync (done, progress) {
 
     // Provide a copy of the config to each feed
     const contexts = this.config.feeds.map((feed) => {
       return {
         feed,
-        config: this.config
+        progress,
+        config: this.config,
       };
     });
+
     waterfall([
         (next) => {
           next(null, contexts);
@@ -212,5 +220,33 @@ module.exports = class NVD {
         }
         done(null, results);
     });
+  }
+
+  // making a lot of assumptions here
+  search (id) {
+    let found = false;
+    let count = 0;
+    const [_,year] = id.split('-');
+    if (this.config.feeds.indexOf(year) !== -1) {
+      const reader = fs.createReadStream(`${this.config.cacheDir}/nvdcve-1.0-${year}.json`);
+      //const stream = JSONStream.parse('CVE_Items.*.cve.CVE_data_meta.ID')
+      const stream = JSONStream.parse('CVE_Items.*.cve')
+      reader.pipe(stream);
+      console.log(`Searching ${year} feed...`);
+      stream.on('data', (data) => {
+        count += 1;
+        if (data.CVE_data_meta.ID === id) {
+          found = true;
+          console.log(JSON.stringify(data, null, 2));
+          stream.end();
+        }
+      });
+
+      stream.on('end', () => {
+        if (!found) {
+          console.log('Not found in %s entries for %s', count, year);
+        }
+      });
+    }
   }
 }
