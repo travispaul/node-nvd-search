@@ -6,7 +6,11 @@ const crypto = require('crypto');
 
 const JSONStream = require('JSONStream');
 const request = require('request');
-const {forEachParallel, waterfall} = require('vasync');
+const {
+  forEachParallel,
+  waterfall,
+  whilst
+} = require('vasync');
 
 let PROGRESSFN;
 
@@ -17,26 +21,26 @@ module.exports = class NVD {
     this.defaults = {
       // Which feeds to download and keep up-to-date
       feeds: [
+        '2002',
+        '2003',
+        '2004',
+        '2005',
+        '2006',
+        '2007',
+        '2008',
+        '2009',
+        '2010',
+        '2011',
+        '2012',
+        '2013',
+        '2014',
+        '2015',
+        '2016',
+        '2017',
+        '2018',
+        '2019',
         'modified',
         'recent',
-        '2019',
-        '2018',
-        '2017',
-        '2016',
-        '2015',
-        '2014',
-        '2013',
-        '2012',
-        '2011',
-        '2010',
-        '2009',
-        '2008',
-        '2007',
-        '2006',
-        '2005',
-        '2004',
-        '2003',
-        '2002',
       ],
 
       // XXX not yet implemented XXX
@@ -63,7 +67,9 @@ module.exports = class NVD {
     const lines = metaFile.split('\r\n');
     const result = {};
     for (const line of lines) {
-      if (!line) continue;
+      if (!line) {
+        continue;
+      }
       const key = line.replace(/:.*$/, '');
       const value = line.replace(/^.*?:/, '');
       result[key] = value;
@@ -81,7 +87,7 @@ module.exports = class NVD {
   // $HOME/.cache should be used.
   static chooseDefaultCacheDir () {
     if (process.env.XDG_CACHE_HOME) {
-      return path.join(process.env.XDG_CACHE_HOME, 'nvd')
+      return path.join(process.env.XDG_CACHE_HOME, 'nvd');
     }
     return path.join(os.homedir(), '.cache', 'nvd');
   }
@@ -90,7 +96,9 @@ module.exports = class NVD {
   static fetchMetaFile (ctx, done) {
     const metaPath = `${ctx.config.rootPath}-${ctx.feed}.meta`;
     request(metaPath, (error, response, body) => {
-      if (error) return done(error);
+      if (error) {
+        return done(error);
+      }
       ctx.metadata = NVD.parseMetaFile(body);
       done(null, ctx);
     });
@@ -139,7 +147,7 @@ module.exports = class NVD {
 
     writer.on('close', () => {
       done(null, ctx);
-    })
+    });
 
     httpStream.pipe(gzip).pipe(writer);
   }
@@ -222,31 +230,72 @@ module.exports = class NVD {
     });
   }
 
-  // making a lot of assumptions here
-  search (id) {
+  search (id, done) {
     let found = false;
-    let count = 0;
+    let haystacksExausted = false;
+    let failure = false;
     const [_,year] = id.split('-');
-    if (this.config.feeds.indexOf(year) !== -1) {
-      const reader = fs.createReadStream(`${this.config.cacheDir}/nvdcve-1.0-${year}.json`);
-      //const stream = JSONStream.parse('CVE_Items.*.cve.CVE_data_meta.ID')
-      const stream = JSONStream.parse('CVE_Items.*.cve')
-      reader.pipe(stream);
-      console.log(`Searching ${year} feed...`);
-      stream.on('data', (data) => {
-        count += 1;
-        if (data.CVE_data_meta.ID === id) {
-          found = true;
-          console.log(JSON.stringify(data, null, 2));
-          stream.end();
-        }
-      });
+    const haystacks = this.config.feeds.slice();
 
-      stream.on('end', () => {
-        if (!found) {
-          console.log('Not found in %s entries for %s', count, year);
+    const results = whilst(
+
+      () => {
+        return !found && !haystacksExausted && !failure;
+      },
+
+      (next) => {
+        let results;
+        let feedName;
+
+        if (!haystacks.length) {
+          haystacksExausted = true;
+          next();
+          return;
         }
+
+        // search yearly feed for CVE first
+        if (year && haystacks.indexOf(year) !== -1) {
+          haystacks.splice(haystacks.indexOf(year), 1);
+          feedName = year;
+        } else {
+          feedName = haystacks.pop();
+        }
+
+        const feedPath = `${this.config.cacheDir}/nvdcve-1.0-${feedName}.json`;
+        const reader = fs.createReadStream(feedPath);
+        const stream = JSONStream.parse('CVE_Items.*.cve');
+
+        reader.pipe(stream);
+
+        reader.on('error', (error) => {
+          failure = true;
+          stream.end();
+          reader.end();
+          next(error, results);
+        });
+
+        stream.on('data', (data) => {
+          if (data.CVE_data_meta.ID === id) {
+            found = true;
+            results = data;
+            stream.end();
+          }
+        });
+
+        stream.on('end', () => {
+          next(null, results);
+        });
+
+        stream.on('error', (error) => {
+          failure = true;
+          stream.end();
+          reader.end();
+          next(error, results);
+        });
+      },
+
+      (error, data) => {
+        done(error, {data, results});
       });
-    }
   }
-}
+};
