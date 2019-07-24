@@ -55,10 +55,7 @@ module.exports = class NVD {
       rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0',
 
       // Default location where the json files are stored
-      cacheDir: NVD.chooseDefaultCacheDir(),
-
-      // Create a local SQLite database for faster searching
-      searchCache: true
+      cacheDir: NVD.chooseDefaultCacheDir()
     };
     this.config = Object.assign({}, this.defaults, options);
   }

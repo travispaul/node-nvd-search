@@ -12,7 +12,7 @@ Create a new instance of the NVD class, you may supply an optional config object
 
 Sync the local cache with the remote NIST feeds.
 
-if a `progress` function is supplied, it is called after each has been handled.
+If a `progress` function is supplied, it is called after each feed has been handled.
 
 ```
 const NVD = require('nvd');
