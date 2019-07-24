@@ -1,2 +1,1 @@
-* text=auto
-test/data/*.meta text eol=crlf
+test/data/*.meta binary
