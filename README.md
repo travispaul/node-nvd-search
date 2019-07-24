@@ -4,13 +4,19 @@ Node module to fetch, cache, and search the NIS National Vulnerability Database.
 
 ## Usage
 
-### nvd.sync
+## new NVD(config);
+
+Create a new instance of the NVD class, you may supply an optional config object.
+
+### nvd.sync(callback, progress)
 
 Sync the local cache with the remote NIST feeds.
 
+if a `progress` function is supplied, it is called after each has been handled.
+
 ```
 const NVD = require('nvd');
-const nvd = NVD();
+const nvd = new NVD();
 nvd.sync((error) => {
   if (error) {
     return console.error(error);
@@ -20,7 +26,7 @@ nvd.sync((error) => {
 });
 ```
 
-### nvd.search
+### nvd.search(id, callback)
 
 Find a specific CVE within the local cached feeds.
 
@@ -35,7 +41,7 @@ nvd.search('CVE-2019-12780', (error, results) => {
 
 ## Configuration Options
 
-You can provide a configuration object to the contrustor: `NVD()`.
+You can provide a configuration object to the constructor: `NVD()`.
 The following options are honored:
 
 ### config.feeds
