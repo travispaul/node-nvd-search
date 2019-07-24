@@ -1,0 +1,2 @@
+* text=auto
+test/data/*.meta text eol=crlf

@@ -1,4 +1,4 @@
-# nvd
+# nvd [![Build Status](https://travis-ci.org/travispaul/node-nvd.svg?branch=master)](https://travis-ci.org/travispaul/node-nvd)
 
 Node module to fetch, cache, and search the NIS National Vulnerability Database.
 
