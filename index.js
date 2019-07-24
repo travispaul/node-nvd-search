@@ -40,7 +40,7 @@ module.exports = class NVD {
         '2018',
         '2019',
         'modified',
-        'recent',
+        'recent'
       ],
 
       // XXX not yet implemented XXX
@@ -48,12 +48,12 @@ module.exports = class NVD {
       // and the current year. E.g. if the last year list in `feeds` is 2019, but the
       // current year is 2022, also attempt to fetch and sync feeds for 2020, 2021
       // and 2022 if they exist.
-      //includeCurrentYearlyFeeds: false,
+      // includeCurrentYearlyFeeds: false,
 
       // fetch `${rootPath}-${feed}.json.gz`, if you have a private cache
       // you can override this to fetch from your private cache.
       rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0',
-      
+
       // Default location where the json files are stored
       cacheDir: NVD.chooseDefaultCacheDir(),
 
@@ -155,38 +155,37 @@ module.exports = class NVD {
   // download feed metafile and download if remote differs from the loca file
   static fetchFeedWaterfall (ctx, done) {
     waterfall([
-        (next) => {
-          next(null, ctx);
-        },
-        NVD.fetchMetaFile,
-        NVD.checkLocalFeedFile,
-        NVD.fetchRemoteFeedFile
+      (next) => {
+        next(null, ctx);
+      },
+      NVD.fetchMetaFile,
+      NVD.checkLocalFeedFile,
+      NVD.fetchRemoteFeedFile
     ], (error, ctx) => {
-        if (typeof ctx.progress === 'function') {
-          ctx.progress();
-        }
-        if (error) {
-          return done(error);
-        }
-        done(null, ctx);
+      if (typeof ctx.progress === 'function') {
+        ctx.progress();
+      }
+      if (error) {
+        return done(error);
+      }
+      done(null, ctx);
     });
   }
 
   // fetch all the remote feeds (if needed)
   static fetchFeedParallel (contexts, done) {
     forEachParallel({
-        func: NVD.fetchFeedWaterfall,
-        inputs: contexts
+      func: NVD.fetchFeedWaterfall,
+      inputs: contexts
     }, (error, results) => {
-        if (error) {
-            return done(error);
-        }
-        const simpleResults = results.operations.map((operation) => {
-          delete operation.result.config;
-          return operation.result;
-        }).filter(val => val);
-
-        done(null, simpleResults);
+      if (error) {
+        return done(error);
+      }
+      const simpleResults = results.operations.map((operation) => {
+        delete operation.result.config;
+        return operation.result;
+      }).filter(val => val);
+      done(null, simpleResults);
     });
   }
 
@@ -206,27 +205,26 @@ module.exports = class NVD {
 
   // sync remote files locally
   sync (done, progress) {
-
     // Provide a copy of the config to each feed
     const contexts = this.config.feeds.map((feed) => {
       return {
         feed,
         progress,
-        config: this.config,
+        config: this.config
       };
     });
 
     waterfall([
-        (next) => {
-          next(null, contexts);
-        },
-        NVD.createCacheDir,
-        NVD.fetchFeedParallel,
-      ], (error, results) => {
-        if (error) {
-          return done(error, results);
-        }
-        done(null, results);
+      (next) => {
+        next(null, contexts);
+      },
+      NVD.createCacheDir,
+      NVD.fetchFeedParallel
+    ], (error, results) => {
+      if (error) {
+        return done(error, results);
+      }
+      done(null, results);
     });
   }
 
@@ -238,7 +236,6 @@ module.exports = class NVD {
     const haystacks = this.config.feeds.slice();
 
     const results = whilst(
-
       () => {
         return !found && !haystacksExausted && !failure;
       },

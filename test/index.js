@@ -9,7 +9,6 @@ const NVD = require('../index');
 
 describe('NVD Class', () => {
   before(done => {
-
     try {
       fs.unlinkSync(path.join(__dirname, 'data', 'cache',
         'nvdcve-1.0-modified.json'));

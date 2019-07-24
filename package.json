@@ -1,6 +1,6 @@
 {
   "name": "nvd",
-  "version": "1.0.0",
+  "version": "20190724",
   "description": "(Unofficial) node module to fetch, cache, and search the NIS National Vulnerability Database.",
   "main": "index.js",
   "repository": "git@github.com:travispaul/node-nvd.git",
@@ -9,10 +9,11 @@
   "private": false,
   "scripts": {
     "test": "mocha",
-    "lint": "jshint *.js test/*.js"
+    "lint": "jshint *.js test/*.js && jscs *.js test/*.js"
   },
   "devDependencies": {
     "chai": "^4.2.0",
+    "jscs": "^3.0.7",
     "jshint": "^2.10.2",
     "mocha": "^6.1.4",
     "nock": "^10.0.6"

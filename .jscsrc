@@ -2,7 +2,7 @@
     "disallowImplicitTypeConversion": ["numeric", "boolean", "binary", "string"],
     "disallowKeywordsOnNewLine": ["else", "catch", "while", "until"],
     "disallowMixedSpacesAndTabs": true,
-    "disallowMultipleLineBreaks": true,
+    "disallowMultipleLineBreaks": false,
     "disallowMultipleLineStrings": true,
     "disallowNewlineBeforeBlockStatements": true,
     "disallowOperatorBeforeLineBreak": ["+", "."],
@@ -18,7 +18,7 @@
     "requireDotNotation": true,
     "requireLineBreakAfterVariableAssignment": true,
     "requireOperatorBeforeLineBreak": true,
-    "requirePaddingNewLinesInObjects": true,
+    "requirePaddingNewLinesInObjects": false,
     "requireParenthesesAroundIIFE": true,
     "requireSpaceAfterBinaryOperators": true,
     "requireSpaceAfterKeywords": true,
@@ -37,9 +37,9 @@
     "requireSpaceBeforeKeywords": ["else", "while", "until", "catch"],
     "requireSpaceBeforeObjectValues": true,
     "requireSpaceBetweenArguments": true,
-    "validateIndentation": 4,
+    "validateIndentation": 2,
     "validateQuoteMarks": {
-        "mark": "\"",
+        "mark": "'",
         "escape": true
     },
     "requireSpaceAfterLineComment": true
