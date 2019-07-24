@@ -60,13 +60,15 @@ describe('NVD Class', () => {
         }
         expect(results).to.deep.equal([{
           feed: 'recent',
+          fetchRemote: false,
           metadata: {
             lastModifiedDate: '2019-07-19T20:00:55-04:00',
             size: '4336300',
             zipSize: '243985',
             gzSize: '243845',
             sha256: 'DA0B3030EF781806228ED40A7F295182AC835E96F4F5B27C258228531FBBED0C'
-          }
+          },
+          progress: undefined
         },
         {
           feed: 'modified',
@@ -77,7 +79,8 @@ describe('NVD Class', () => {
             gzSize: '354665',
             sha256: '0BF42E5E2CF81A7F3F9A6F1581BF54D5E970185D96D3D9011ED63AA695FB7B2D'
           },
-          fetchRemote: true
+          fetchRemote: true,
+          progress: undefined
         }]);
         syncScope.done();
         done();
