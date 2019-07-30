@@ -12,8 +12,6 @@ const {
   whilst
 } = require('vasync');
 
-let PROGRESSFN;
-
 module.exports = class NVD {
 
   constructor(options = {}) {
@@ -229,8 +227,13 @@ module.exports = class NVD {
     let found = false;
     let haystacksExausted = false;
     let failure = false;
-    const [_,year] = id.split('-');
+    let year = false;
+    const parts = id.split('-');
     const haystacks = this.config.feeds.slice();
+
+    if (parts.length > 1) {
+      year = parts[1];
+    }
 
     const results = whilst(
       () => {

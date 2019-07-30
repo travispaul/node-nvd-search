@@ -2,7 +2,7 @@ const fs = require('fs');
 const url = require('url');
 const path = require('path');
 
-const {expect, assert} = require('chai');
+const {expect} = require('chai');
 const nock = require('nock');
 
 const NVD = require('../index');
@@ -49,7 +49,7 @@ describe('NVD Class', () => {
           'nvdcve-1.0-modified.meta')).toString('utf8'));
 
       syncScope.get(`${syncURL.pathname}-modified.json.gz`)
-        .reply(200, (uri, requestBody) => {
+        .reply(200, () => {
           return fs.createReadStream(path.join(__dirname, 'data',
             'nvdcve-1.0-modified.json.gz'));
         });
