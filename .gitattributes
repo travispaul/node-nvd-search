@@ -1,1 +1,3 @@
 test/data/*.meta binary
+test/data/cache/*.json binary
+

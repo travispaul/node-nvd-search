@@ -8,11 +8,11 @@
   "license": "BSD-2-Clause",
   "private": false,
   "scripts": {
-    "test": "jshint *.js test/*.js && jscs *.js test/*.js && mocha"
+    "test": "jshint *.js test/*.js && eslint *.js test/*.js && mocha"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "jscs": "^3.0.7",
+    "eslint": "^6.1.0",
     "jshint": "^2.10.2",
     "mocha": "^6.1.4",
     "nock": "^10.0.6"
