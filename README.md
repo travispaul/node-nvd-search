@@ -1,4 +1,4 @@
-# nvd [![Build Status](https://travis-ci.org/travispaul/node-nvd.svg?branch=master)](https://travis-ci.org/travispaul/node-nvd)
+# nvd-search [![Build Status](https://travis-ci.org/travispaul/node-nvd.svg?branch=master)](https://travis-ci.org/travispaul/node-nvd)
 
 Node module to fetch, cache, and search the NIS National Vulnerability Database.
 
@@ -15,7 +15,7 @@ Sync the local cache with the remote NIST feeds.
 If a `progress` function is supplied, it is called after each feed has been handled.
 
 ```
-const NVD = require('nvd');
+const NVD = require('nvd-search');
 const nvd = new NVD();
 nvd.sync((error) => {
   if (error) {
@@ -92,3 +92,7 @@ rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0'
 The directory to use when caching the feeds locally.
 If this is not supplied, the environment variable [XDG_CACHE_HOME](https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 is used if defined, otherwise the fallback of `~.cache/nvd` is used.
+
+## See also
+
+- [nvd-search-cli](https://github.com/travispaul/node-nvd-search-cli)
