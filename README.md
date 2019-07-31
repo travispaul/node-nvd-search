@@ -15,7 +15,7 @@ Sync the local cache with the remote NIST feeds.
 If a `progress` function is supplied, it is called after each feed has been handled.
 
 ```
-const NVD = require('nvd');
+const NVD = require('nvd-search');
 const nvd = new NVD();
 nvd.sync((error) => {
   if (error) {
