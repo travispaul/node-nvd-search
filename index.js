@@ -260,7 +260,7 @@ module.exports = class NVD {
 
         const feedPath = `${this.config.cacheDir}/nvdcve-1.0-${feedName}.json`;
         const reader = fs.createReadStream(feedPath);
-        const stream = JSONStream.parse('CVE_Items.*.cve');
+        const stream = JSONStream.parse('CVE_Items.*');
 
         reader.pipe(stream);
 
@@ -272,7 +272,7 @@ module.exports = class NVD {
         });
 
         stream.on('data', (data) => {
-          if (data.CVE_data_meta.ID === id) {
+          if (data.cve.CVE_data_meta.ID === id) {
             found = true;
             results = data;
             stream.end();

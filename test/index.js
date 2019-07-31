@@ -87,4 +87,17 @@ describe('NVD Class', () => {
       });
     });
   });
+
+  describe('nvd.search()', () => {
+    it('Located a CVE in the cache', done => {
+      const nvd = new NVD({
+        feeds: ['recent', 'modified'],
+        cacheDir: path.join(__dirname, 'data', 'cache')
+      });
+      nvd.search('CVE-2012-0779', (error, results) => {
+        expect(results.data.impact.baseMetricV2.severity).to.equal('HIGH');
+        done();
+      });
+    });
+  });
 });
