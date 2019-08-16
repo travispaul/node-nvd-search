@@ -48,6 +48,8 @@ jobs:
         with:
           node_version: ${{ matrix.node_version }}
       - run: yarn
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - run: yarn test
 
   publish-npm:
