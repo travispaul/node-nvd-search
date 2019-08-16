@@ -36,12 +36,13 @@ jobs:
         env:
           STEPS_CONTEXT: ${{ toJson(steps) }}
         run: echo "$STEPS_CONTEXT"
+
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        node_version: [10, 12]
-        os: [ubuntu-latest, macOS-latest]
+        node_version: [12]
+        os: [macOS-latest]
     steps:
       - uses: actions/checkout@v1
       - uses: actions/setup-node@v1
@@ -51,6 +52,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - run: yarn test
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
   publish-npm:
     needs: build
