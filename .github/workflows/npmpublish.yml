@@ -50,7 +50,6 @@ jobs:
           node_version: ${{ matrix.node_version }}
 
       - name: yarn test
-        if: runner.os != 'windows'
         run: |
           yarn
           yarn test
