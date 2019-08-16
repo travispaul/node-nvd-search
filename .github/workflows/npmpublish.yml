@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  one:
+  ctx:
     runs-on: ubuntu-16.04
     steps:
       - name: Dump GitHub context
@@ -48,10 +48,20 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node_version: ${{ matrix.node_version }}
-      - run: yarn
+
+      - name: yarn test
+        if: runner.os != 'windows'
+        run: |
+          yarn
+          yarn test
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-      - run: yarn test
+
+      - name: npm test
+        if: runner.os == 'windows'
+        run: |
+          npm
+          npm test
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
@@ -64,7 +74,9 @@ jobs:
         with:
           node_version: 12
           registry-url: https://registry.npmjs.org/
-      - run: npm publish
+      - name: Publish to npmjs.org
+        if: github.ref == 'refs/heads/master' && github.event.event_name == 'pushed'
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
@@ -78,6 +90,8 @@ jobs:
           node_version: 12
           registry-url: https://npm.pkg.github.com/
           scope: '@travispaul'
-      - run: yarn publish
+      - name: Publish to Github
+        if: github.ref == 'refs/heads/master' && github.event.event_name == 'pushed'
+        run: yarn publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
