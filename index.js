@@ -187,7 +187,7 @@ module.exports = class NVD {
   // Create the configured cache directory
   static createCacheDir (ctx, next) {
     fs.mkdir(ctx[0].config.cacheDir, {recursive: true}, (error) => {
-      if (error) {
+      if (error && error.code !== 'EEXIST') {
         return next(error, ctx);
       }
       next(null, ctx);
