@@ -12,6 +12,38 @@ const {
   whilst
 } = require('vasync');
 
+// For Node.js versions < 10 that don't support recursive mkdir
+// https://stackoverflow.com/questions/31645738/how-to-create-full-path-with-nodes-fs-mkdirsync
+function mkDirByPathSync(targetDir, { isRelativeToScript = false } = {}) {
+  const sep = path.sep;
+  const initDir = path.isAbsolute(targetDir) ? sep : '';
+  const baseDir = isRelativeToScript ? __dirname : '.';
+
+  return targetDir.split(sep).reduce((parentDir, childDir) => {
+    const curDir = path.resolve(baseDir, parentDir, childDir);
+    try {
+      fs.mkdirSync(curDir);
+    } catch (err) {
+      if (err.code === 'EEXIST') { // curDir already exists!
+        return curDir;
+      }
+
+      // To avoid `EISDIR` error on Mac and `EACCES`-->`ENOENT` and `EPERM` on Windows.
+      if (err.code === 'ENOENT') { // Throw the original parentDir error on curDir `ENOENT` failure.
+        throw new Error(`EACCES: permission denied, mkdir '${parentDir}'`);
+      }
+
+      const caughtErr = ['EACCES', 'EPERM', 'EISDIR'].indexOf(err.code) > -1;
+      if (!caughtErr || caughtErr && curDir === path.resolve(targetDir)) {
+        throw err; // Throw if it's just the last created dir.
+      }
+    }
+
+    return curDir;
+  }, initDir);
+}
+
+
 module.exports = class NVD {
 
   constructor(options = {}) {
@@ -99,7 +131,7 @@ module.exports = class NVD {
     });
   }
 
-  // Determine if local file matches the remoet metadata, if it doesn't set
+  // Determine if local file matches the remote metadata, if it doesn't set
   // ctx.fetchRemote to true so the next function in the pipeline downloads
   // the latest file.
   static checkLocalFeedFile (ctx, done) {
@@ -157,7 +189,7 @@ module.exports = class NVD {
       NVD.checkLocalFeedFile,
       NVD.fetchRemoteFeedFile
     ], (error, ctx) => {
-      if (typeof ctx.progress === 'function') {
+      if (!error && typeof ctx.progress === 'function') {
         ctx.progress();
       }
       if (error) {
@@ -186,6 +218,18 @@ module.exports = class NVD {
 
   // Create the configured cache directory
   static createCacheDir (ctx, next) {
+    // Node.js < 10 doesn't support `recursive: true` for mkdir
+    if (parseInt(process.version.replace(/^v/,'').split('.')[0], 10) < 10) {
+      try {
+        console.warn('Warning: Node.js version > 10 recommended');
+        mkDirByPathSync(ctx[0].config.cacheDir);
+      } catch (e) {
+        console.error(e);
+        return next(e);
+      }
+      return next(null, ctx);
+    }
+
     fs.mkdir(ctx[0].config.cacheDir, {recursive: true}, (error) => {
       if (error && error.code !== 'EEXIST') {
         return next(error, ctx);
