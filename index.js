@@ -14,7 +14,7 @@ const {
 
 // For Node.js versions < 10 that don't support recursive mkdir
 // https://stackoverflow.com/questions/31645738/how-to-create-full-path-with-nodes-fs-mkdirsync
-function mkDirByPathSync(targetDir, { isRelativeToScript = false } = {}) {
+function mkDirByPathSync (targetDir, { isRelativeToScript = false } = {}) {
   const sep = path.sep;
   const initDir = path.isAbsolute(targetDir) ? sep : '';
   const baseDir = isRelativeToScript ? __dirname : '.';
@@ -46,7 +46,7 @@ function mkDirByPathSync(targetDir, { isRelativeToScript = false } = {}) {
 
 module.exports = class NVD {
 
-  constructor(options = {}) {
+  constructor (options = {}) {
     // Defaults and user supplied options combined
     this.defaults = {
       // Which feeds to download and keep up-to-date
@@ -91,7 +91,7 @@ module.exports = class NVD {
     this.config = Object.assign({}, this.defaults, options);
   }
 
-  static parseMetaFile(metaFile) {
+  static parseMetaFile (metaFile) {
     const lines = metaFile.split('\r\n');
     const result = {};
     for (const line of lines) {
@@ -151,6 +151,7 @@ module.exports = class NVD {
     reader.on('error', (error) => {
       reader.close();
       if (error && error.code !== 'ENOENT') {
+        console.error('Error: checkLocalFeedFile()', error);
         return done(error);
       }
       ctx.fetchRemote = true;
@@ -162,25 +163,33 @@ module.exports = class NVD {
 
   // Download and cache the specific remote feed file, unzip it and write it to
   // disk. Only do this if ctx.fetchRemote is true (see checkLocalFeedFile)
-  static fetchRemoteFeedFile(ctx, done) {
+  static fetchRemoteFeedFile (ctx, done) {
     if (!ctx.fetchRemote) {
       return done(null, ctx);
     }
     const gzip = zlib.createGunzip();
+    console.log(`fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
     const writer = fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
     const httpStream = request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`);
 
-    httpStream.on('error', done);
-    gzip.on('error', done);
+    httpStream.on('error', (error) => {
+      console.error('Error: fetchRemoteFeedFile:httpStream', error);
+      done(error);
+    });
+    gzip.on('error', (error) => {
+      console.error('Error: fetchRemoteFeedFile:gzip', error);
+      done(error);
+    });
 
     writer.on('close', () => {
+      console.log('fetchRemoteFeedFile:close');
       done(null, ctx);
     });
 
     httpStream.pipe(gzip).pipe(writer);
   }
 
-  // download feed metafile and download if remote differs from the loca file
+  // Download feed metafile and download if remote differs from the local file
   static fetchFeedWaterfall (ctx, done) {
     waterfall([
       (next) => {
