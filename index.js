@@ -175,6 +175,21 @@ module.exports = class NVD {
       console.error('Error: fetchRemoteFeedFile:httpStream', error);
       done(error);
     });
+
+    httpStream.on('response', function (response) {
+      if (res.statusCode !== 200) throw new Error('Status not 200')
+
+      console.log(res.headers['content-encoding']);
+      // if (encoding == 'gzip') {
+      //   res.pipe(zlib.createGunzip()).pipe(outStream)
+      // } else if (encoding == 'deflate') {
+      //   res.pipe(zlib.createInflate()).pipe(outStream)
+      // } else {
+      //   res.pipe(outStream)
+      // }
+      response.pipe(gzip).pipe(writer);
+    });
+
     gzip.on('error', (error) => {
       console.error('Error: fetchRemoteFeedFile:gzip', `fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`, error);
       done(error);
@@ -184,8 +199,6 @@ module.exports = class NVD {
       console.log('fetchRemoteFeedFile:close', `fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
       done(null, ctx);
     });
-
-    httpStream.pipe(gzip).pipe(writer);
   }
 
   // Download feed metafile and download if remote differs from the local file
