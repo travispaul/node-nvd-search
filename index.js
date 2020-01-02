@@ -164,6 +164,7 @@ module.exports = class NVD {
   // disk. Only do this if ctx.fetchRemote is true (see checkLocalFeedFile)
   static fetchRemoteFeedFile (ctx, done) {
     if (!ctx.fetchRemote) {
+      console.log(`skipping: ${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
       return done(null, ctx);
     }
     const gzip = zlib.createGunzip();
