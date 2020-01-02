@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
-
+const { pipeline } = require('stream');
 const JSONStream = require('JSONStream');
 const request = require('request');
 const {
@@ -165,18 +165,19 @@ module.exports = class NVD {
     if (!ctx.fetchRemote) {
       return done(null, ctx);
     }
-    const gzip = zlib.createGunzip();
-    const writer = fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
-    const httpStream = request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`);
 
-    httpStream.on('error', done);
-    gzip.on('error', done);
-
-    writer.on('close', () => {
-      done(null, ctx);
-    });
-
-    httpStream.pipe(gzip).pipe(writer);
+    pipeline(
+      request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`),
+      zlib.createGunzip(),
+      fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`),
+      (error) => {
+        if (error) {
+          done(error);
+        } else {
+          done(null, ctx);
+        }
+      }
+    );
   }
 
   // download feed metafile and download if remote differs from the loca file
@@ -218,18 +219,6 @@ module.exports = class NVD {
 
   // Create the configured cache directory
   static createCacheDir (ctx, next) {
-    // Node.js < 10 doesn't support `recursive: true` for mkdir
-    if (parseInt(process.version.replace(/^v/,'').split('.')[0], 10) < 10) {
-      try {
-        console.warn('Warning: Node.js version > 10 recommended');
-        mkDirByPathSync(ctx[0].config.cacheDir);
-      } catch (e) {
-        console.error(e);
-        return next(e);
-      }
-      return next(null, ctx);
-    }
-
     fs.mkdir(ctx[0].config.cacheDir, {recursive: true}, (error) => {
       if (error && error.code !== 'EEXIST') {
         return next(error, ctx);
