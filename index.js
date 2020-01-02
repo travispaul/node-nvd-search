@@ -144,6 +144,7 @@ module.exports = class NVD {
       hash.end();
       const hashValue = hash.read().toUpperCase();
       ctx.fetchRemote = (hashValue !== ctx.metadata.sha256);
+      console.log('checkLocalFeedFile', hashValue, ctx.metadata.sha256);
       done(null, ctx);
     });
 
