@@ -71,6 +71,7 @@ feeds: [
   '2017',
   '2018',
   '2019',
+  '2020',
   'modified',
   'recent'
 ]
@@ -91,7 +92,7 @@ rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0'
 
 The directory to use when caching the feeds locally.
 If this is not supplied, the environment variable [XDG_CACHE_HOME](https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
-is used if defined, otherwise the fallback of `~.cache/nvd` is used.
+is used if defined, otherwise the fallback of `~/.cache/nvd` is used.
 
 ## See also
 
