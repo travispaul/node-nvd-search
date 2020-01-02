@@ -140,7 +140,7 @@ module.exports = class NVD {
     const hash = crypto.createHash('sha256');
     hash.setEncoding('hex');
 
-    reader.on('end', () => {
+    reader.on('finish', () => {
       hash.end();
       const hashValue = hash.read().toUpperCase();
       ctx.fetchRemote = (hashValue !== ctx.metadata.sha256);
