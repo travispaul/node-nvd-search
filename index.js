@@ -194,7 +194,7 @@ module.exports = class NVD {
       done(error);
     });
 
-    writer.on('close', () => {
+    writer.on('finish', () => {
       console.log('fetchRemoteFeedFile:close', `fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
       done(null, ctx);
     });
