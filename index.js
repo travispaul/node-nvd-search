@@ -168,7 +168,6 @@ module.exports = class NVD {
       return done(null, ctx);
     }
     const gzip = zlib.createGunzip();
-    console.log(`fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
     const writer = fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
     const httpStream = request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`);
 
@@ -177,12 +176,12 @@ module.exports = class NVD {
       done(error);
     });
     gzip.on('error', (error) => {
-      console.error('Error: fetchRemoteFeedFile:gzip', error);
+      console.error('Error: fetchRemoteFeedFile:gzip', `fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`, error);
       done(error);
     });
 
     writer.on('close', () => {
-      console.log('fetchRemoteFeedFile:close');
+      console.log('fetchRemoteFeedFile:close', `fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`);
       done(null, ctx);
     });
 
