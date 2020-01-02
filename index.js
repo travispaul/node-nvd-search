@@ -177,9 +177,8 @@ module.exports = class NVD {
     });
 
     httpStream.on('response', function (response) {
-      if (res.statusCode !== 200) throw new Error('Status not 200')
 
-      console.log(res.headers['content-encoding']);
+      console.log(response.headers['content-encoding']);
       // if (encoding == 'gzip') {
       //   res.pipe(zlib.createGunzip()).pipe(outStream)
       // } else if (encoding == 'deflate') {
