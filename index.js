@@ -179,7 +179,7 @@ module.exports = class NVD {
     gzip.on('error', (error) => {
       console.error('Error: fetchRemoteFeedFile:gzip',
         `fetchRemoteFeedFile:${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`, 
-        `${ctx.config.rootPath}-${ctx.feed}.json.gz`
+        `${ctx.config.rootPath}-${ctx.feed}.json.gz`,
         error);
       done(error);
     });
