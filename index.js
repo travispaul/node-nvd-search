@@ -67,7 +67,7 @@ module.exports = class NVD {
     this.config = Object.assign({}, this.defaults, options);
 
     if (['1.0', '1.1'].indexOf(this.config.schemaVersion) === -1) {
-      console.warning('Warning: NIST feed schema version "%s" has not been tested', this.config.schemaVersion);
+      console.warn('Warning: NIST feed schema version "%s" has not been tested', this.config.schemaVersion);
     }
 
     this.config.rootPath = `${this.config.rootPath}${this.config.schemaVersion}/nvdcve-${this.config.schemaVersion}`;
