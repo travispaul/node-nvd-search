@@ -47,6 +47,11 @@ jobs:
           registry-url: https://registry.npmjs.org/
       - name: Publish to npmjs.org
         if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-        run: npm publish
+        run: |
+          if [ "$(jq -r .version < package.json)" != "$(npm view nvd-search version)" ]; then
+            npm publish
+          else
+            echo "package.json and latest published version are the same."
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
