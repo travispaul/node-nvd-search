@@ -1,4 +1,4 @@
-# nvd-search [![Build Status](https://travis-ci.org/travispaul/node-nvd-search.svg?branch=master)](https://travis-ci.org/travispaul/node-nvd-search)
+# nvd-search ![Node.js Package](https://github.com/travispaul/node-nvd-search/workflows/Node.js%20Package/badge.svg)
 
 Node module to fetch, cache, and search the NIS National Vulnerability Database.
 
