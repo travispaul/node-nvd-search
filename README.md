@@ -17,7 +17,7 @@ If a `progress` function is supplied, it is called after each feed has been hand
 ```
 const NVD = require('nvd-search');
 const nvd = new NVD();
-nvd.sync((error) => {
+nvd.sync((error, results) => {
   if (error) {
     return console.error(error);
   }
@@ -71,9 +71,20 @@ feeds: [
   '2017',
   '2018',
   '2019',
+  '2020',
   'modified',
   'recent'
 ]
+```
+
+### config.schemaVersion
+
+Feed schema version to use in paths, currently tested with versions 1.0 and 1.1
+
+**Default:**
+
+```
+schemaVersion: '1.1'
 ```
 
 ### config.rootPath
@@ -84,7 +95,7 @@ this if you host your own local cache.
 **Default:**
 
 ```
-rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0'
+rootPath: 'https://nvd.nist.gov/feeds/json/cve/'
 ```
 
 ### config.cacheDir
@@ -92,6 +103,26 @@ rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0'
 The directory to use when caching the feeds locally.
 If this is not supplied, the environment variable [XDG_CACHE_HOME](https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 is used if defined, otherwise the fallback of `~.cache/nvd` is used.
+
+### config.fetchLimit
+
+When fetching remote feeds, only fetch this many files in parallel.
+
+**Default:**
+
+```
+fetchLimit: 2
+```
+
+### config.persistAll
+
+Save all files fetched from rootPath, useful for mirroring the feeds.
+
+**Default:**
+
+```
+persistAll: false
+```
 
 ## See also
 

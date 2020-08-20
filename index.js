@@ -6,11 +6,9 @@ const crypto = require('crypto');
 const { pipeline } = require('stream');
 const JSONStream = require('JSONStream');
 const request = require('request');
-const {
-  forEachParallel,
-  waterfall,
-  whilst
-} = require('vasync');
+const waterfall = require('async/waterfall');
+const queue = require('async/queue');
+const whilst = require('async/whilst');
 
 module.exports = class NVD {
 
@@ -49,14 +47,30 @@ module.exports = class NVD {
       // and 2022 if they exist.
       // includeCurrentYearlyFeeds: false,
 
+      schemaVersion: '1.1',
+
       // fetch `${rootPath}-${feed}.json.gz`, if you have a private cache
       // you can override this to fetch from your private cache.
-      rootPath: 'https://nvd.nist.gov/feeds/json/cve/1.0/nvdcve-1.0',
+      rootPath: 'https://nvd.nist.gov/feeds/json/cve/',
 
       // Default location where the json files are stored
-      cacheDir: NVD.chooseDefaultCacheDir()
+      cacheDir: NVD.chooseDefaultCacheDir(),
+
+      // When fetching remote feeds, only fetch this many files in parallel
+      fetchLimit: 2,
+
+      // Save all files fetched from rootPath, useful for mirroring the feeds
+      persistAll: false
+
     };
+
     this.config = Object.assign({}, this.defaults, options);
+
+    if (['1.0', '1.1'].indexOf(this.config.schemaVersion) === -1) {
+      console.warning('Warning: NIST feed schema version "%s" has not been tested', this.config.schemaVersion);
+    }
+
+    this.config.rootPath = `${this.config.rootPath}${this.config.schemaVersion}/nvdcve-${this.config.schemaVersion}`;
   }
 
   static parseMetaFile(metaFile) {
@@ -95,8 +109,21 @@ module.exports = class NVD {
       if (error) {
         return done(error);
       }
+
       ctx.metadata = NVD.parseMetaFile(body);
-      done(null, ctx);
+
+      if (ctx.config.persistAll) {
+        const filePath = `${ctx.config.cacheDir}/nvdcve-${ctx.config.schemaVersion}-${ctx.feed}.meta`;
+        fs.writeFile(filePath, body, (error) => {
+          if (error) {
+            done(error);
+          } else {
+            done(null, ctx);
+          }
+        });
+      } else {
+        done(null, ctx);
+      }
     });
   }
 
@@ -104,7 +131,7 @@ module.exports = class NVD {
   // ctx.fetchRemote to true so the next function in the pipeline downloads
   // the latest file.
   static checkLocalFeedFile (ctx, done) {
-    const localFeedFile = `${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`;
+    const localFeedFile = `${ctx.config.cacheDir}/nvdcve-${ctx.config.schemaVersion}-${ctx.feed}.json`;
     const reader = fs.createReadStream(localFeedFile);
     const hash = crypto.createHash('sha256');
     hash.setEncoding('hex');
@@ -135,21 +162,61 @@ module.exports = class NVD {
       return done(null, ctx);
     }
 
-    pipeline(
-      request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`),
-      zlib.createGunzip(),
-      fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-1.0-${ctx.feed}.json`),
-      (error) => {
+    if (ctx.config.persistAll) {
+      waterfall([
+        // write the gzip'd file to disk
+        (next) => {
+          pipeline(
+            request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`),
+            fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-${ctx.config.schemaVersion}-${ctx.feed}.json.gz`),
+            (error) => {
+              if (error) {
+                next(error);
+              } else {
+                next(null, ctx);
+              }
+            }
+          );
+        },
+        // gunzip the file for use
+        (ctx, next) => {
+          pipeline(
+            fs.createReadStream(`${ctx.config.cacheDir}/nvdcve-${ctx.config.schemaVersion}-${ctx.feed}.json.gz`),
+            zlib.createGunzip(),
+            fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-${ctx.config.schemaVersion}-${ctx.feed}.json`),
+            (error) => {
+              if (error) {
+                next(error);
+              } else {
+                next(null, ctx);
+              }
+            }
+          );
+        },
+      ], (error, ctx) => {
         if (error) {
-          done(error);
-        } else {
-          done(null, ctx);
+          return done(error);
         }
-      }
-    );
+        done(null, ctx);
+      });
+
+    } else {
+      pipeline(
+        request(`${ctx.config.rootPath}-${ctx.feed}.json.gz`),
+        zlib.createGunzip(),
+        fs.createWriteStream(`${ctx.config.cacheDir}/nvdcve-${ctx.config.schemaVersion}-${ctx.feed}.json`),
+        (error) => {
+          if (error) {
+            done(error);
+          } else {
+            done(null, ctx);
+          }
+        }
+      );
+    }
   }
 
-  // download feed metafile and download if remote differs from the loca file
+  // download feed metafile and download if remote differs from the local file
   static fetchFeedWaterfall (ctx, done) {
     waterfall([
       (next) => {
@@ -171,18 +238,28 @@ module.exports = class NVD {
 
   // fetch all the remote feeds (if needed)
   static fetchFeedParallel (contexts, done) {
-    forEachParallel({
-      func: NVD.fetchFeedWaterfall,
-      inputs: contexts
-    }, (error, results) => {
+    const completed = [];
+
+    const fetchQueue = queue(NVD.fetchFeedWaterfall, contexts[0].config.fetchLimit);
+
+    fetchQueue.error((error, task) => {
+      console.error('queue task experienced an error', task);
+      done(error);
+    });
+
+    fetchQueue.push(contexts, (error, task) => {
       if (error) {
+        console.error('queue push experienced an error', error);
         return done(error);
       }
-      const simpleResults = results.operations.map((operation) => {
-        delete operation.result.config;
-        return operation.result;
-      }).filter(val => val);
-      done(null, simpleResults);
+      if (task.config) {
+        delete task.config;
+      }
+      completed.push(task);
+    });
+
+    fetchQueue.drain(() => {
+      done(null, completed);
     });
   }
 
@@ -202,6 +279,7 @@ module.exports = class NVD {
 
   // sync remote files locally
   sync (done, progress) {
+
     // Provide a copy of the config to each feed
     const contexts = this.config.feeds.map((feed) => {
       return {
@@ -230,6 +308,7 @@ module.exports = class NVD {
     let haystacksExausted = false;
     let failure = false;
     let year = false;
+    let results;
     const parts = id.split('-');
     const haystacks = this.config.feeds.slice();
 
@@ -237,13 +316,13 @@ module.exports = class NVD {
       year = parts[1];
     }
 
-    const results = whilst(
-      () => {
-        return !found && !haystacksExausted && !failure;
+    whilst(
+      (next) => {
+        next(null, !found && !haystacksExausted && !failure);
       },
 
       (next) => {
-        let results;
+
         let feedName;
 
         if (!haystacks.length) {
@@ -260,7 +339,7 @@ module.exports = class NVD {
           feedName = haystacks.pop();
         }
 
-        const feedPath = `${this.config.cacheDir}/nvdcve-1.0-${feedName}.json`;
+        const feedPath = `${this.config.cacheDir}/nvdcve-${this.config.schemaVersion}-${feedName}.json`;
         const reader = fs.createReadStream(feedPath);
         const stream = JSONStream.parse('CVE_Items.*');
 

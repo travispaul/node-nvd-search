@@ -34,6 +34,7 @@ describe('NVD Class', () => {
   describe('nvd.sync()', () => {
     it('Fetches all desired files', done => {
       const nvd = new NVD({
+        schemaVersion: '1.0',
         feeds: ['recent', 'modified'],
         cacheDir: path.join(__dirname, 'data', 'cache')
       });
@@ -91,6 +92,7 @@ describe('NVD Class', () => {
   describe('nvd.search()', () => {
     it('Located a CVE in the cache', done => {
       const nvd = new NVD({
+        schemaVersion: '1.0',
         feeds: ['recent', 'modified'],
         cacheDir: path.join(__dirname, 'data', 'cache')
       });
