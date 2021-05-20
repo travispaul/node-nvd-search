@@ -1,11 +1,12 @@
-name: Publish to NPM
+name: Publish
 
 on:
   push:
     branches:
       - master
 
-  publish-npm:
+jobs:
+  publish:
     needs: build
     runs-on: ubuntu-latest
     steps:
