@@ -14,7 +14,7 @@ Sync the local cache with the remote NIST feeds.
 
 If a `progress` function is supplied, it is called after each feed has been handled.
 
-```
+```js
 const NVD = require('nvd-search');
 const nvd = new NVD();
 nvd.sync((error, results) => {
@@ -30,7 +30,7 @@ nvd.sync((error, results) => {
 
 Find a specific CVE within the local cached feeds.
 
-```
+```js
 nvd.search('CVE-2019-12780', (error, results) => {
   if (error) {
     return console.error(error);
@@ -51,7 +51,7 @@ You likely don't want to change this option.
 
 **Default:**
 
-```
+```js
 feeds: [
   '2002',
   '2003',
@@ -84,7 +84,7 @@ Feed schema version to use in paths, currently tested with versions 1.0 and 1.1
 
 **Default:**
 
-```
+```js
 schemaVersion: '1.1'
 ```
 
@@ -95,7 +95,7 @@ this if you host your own local cache.
 
 **Default:**
 
-```
+```js
 rootPath: 'https://nvd.nist.gov/feeds/json/cve/'
 ```
 
@@ -108,10 +108,11 @@ is used if defined, otherwise the fallback of `~.cache/nvd` is used.
 ### config.fetchLimit
 
 When fetching remote feeds, only fetch this many files in parallel.
+NIST often will throttle and/or disconnect clients making too many connections.
 
 **Default:**
 
-```
+```js
 fetchLimit: 2
 ```
 
@@ -121,7 +122,7 @@ Save all files fetched from rootPath, useful for mirroring the feeds.
 
 **Default:**
 
-```
+```js
 persistAll: false
 ```
 
