@@ -1,6 +1,6 @@
 # nvd-search [![Tests](https://github.com/travispaul/node-nvd-search/actions/workflows/test.yml/badge.svg)](https://github.com/travispaul/node-nvd-search/actions/workflows/test.yml)
 
-Node module to fetch, cache, and search the NIS National Vulnerability Database.
+Node module to fetch, cache, and search the NIST National Vulnerability Database.
 
 ## Usage
 
