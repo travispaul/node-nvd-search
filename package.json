@@ -1,6 +1,6 @@
 {
   "name": "nvd-search",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "(Unofficial) node module to fetch, cache, and search the NIST National Vulnerability Database.",
   "main": "index.js",
   "repository": "git@github.com:travispaul/node-nvd.git",
