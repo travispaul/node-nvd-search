@@ -37,6 +37,7 @@ module.exports = class NVD {
         '2019',
         '2020',
         '2021',
+        '2022',
         'modified',
         'recent'
       ],

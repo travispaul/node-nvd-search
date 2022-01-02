@@ -16,6 +16,7 @@ jobs:
         node_version:
           - 12
           - 14
+          - 16
         architecture:
           - x64
 
